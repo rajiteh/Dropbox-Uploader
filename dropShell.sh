@@ -192,21 +192,33 @@ function sh_put
 function sh_rm
 {
     local arg1=$1
-
+    local arg2=$2
     if [ ! -z "$arg1" ]; then
-
-        #Relative or absolute path?
-        if [ ${arg1:0:1} == "/" ]; then
-            $DU $DU_OPT remove "$(normalize_path "$arg1")"
+        if [ "$arg1" == "-p" ]; then
+            if [ ! -z "$arg2" ]; then
+	        arr=()
+		IFS=$'\n'
+		for i in $(sh_ls | grep -oE "^ \[F\].*" | awk '{$1=$2="";gsub(/^[ \t]+/, "", $0); print}' | grep -oE "^${arg2}$" )
+		do
+			echo "WOT" $i
+		done
+            else
+                echo -e "rm: need a valid regular expresion with -p"
+                echo -e "syntax: rm -p <PATTERN>"
+            fi
         else
-            $DU $DU_OPT remove "$(normalize_path "$CWD/$arg1")"
-        fi
+            #Relative or absolute path?
+            if [ ${arg1:0:1} == "/" ]; then
+                $DU $DU_OPT remove "$(normalize_path "$arg1")"
+            else
+                $DU $DU_OPT remove "$(normalize_path "$CWD/$arg1")"
+            fi
 
-        #Checking for errors
-        if [ $? -ne 0 ]; then
-            echo -e "rm: cannot remove '$arg1'"
+            #Checking for errors
+            if [ $? -ne 0 ]; then
+                echo -e "rm: cannot remove '$arg1'"
+            fi
         fi
-
     #args error
     else
         echo -e "rm: missing operand"
@@ -370,7 +382,7 @@ while (true); do
         ;;
 
         rm)
-            sh_rm "$arg1"
+            sh_rm "$arg1" "$arg2"
         ;;
 
         mkdir)
